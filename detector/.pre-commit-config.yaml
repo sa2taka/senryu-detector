@@ -9,8 +9,8 @@ repos:
     rev: v1.13.0
     hooks:
       - id: mypy
-        additional_dependencies: [pytest]
-        args: [--strict]
+        additional_dependencies: [pytest, pydantic, sudachipy]
+        args: [--strict, --ignore-missing-imports]
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:

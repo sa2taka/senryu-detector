@@ -15,7 +15,11 @@ authors = [
     { name = "senryu-detector", email = "example@example.com" },
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "sudachipy>=0.6.8",
+    "sudachidict-full>=20240716",
+    "pydantic>=2.0.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -74,6 +78,15 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pydantic",
+    "pydantic.*",
+    "sudachipy",
+    "sudachipy.*",
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
