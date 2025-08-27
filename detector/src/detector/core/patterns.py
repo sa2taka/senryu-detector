@@ -63,7 +63,9 @@ def validate_senryu_rules(
     if not is_valid_senryu_pattern(mora_pattern):
         return False
 
-    # 2. 句開始の品詞ルール
+    # 2. 句開始の品詞ルール（すべての句をチェック）
+    if not _is_valid_phrase_start_strict(upper_tokens[0]):
+        return False
     if not _is_valid_phrase_start_strict(middle_tokens[0]):
         return False
     if not _is_valid_phrase_start_strict(lower_tokens[0]):

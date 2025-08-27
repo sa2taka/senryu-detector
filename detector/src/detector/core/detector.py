@@ -377,7 +377,9 @@ class SenryuDetector:
 
         # 句の開始に対するペナルティ/ボーナス
 
-        # 中句・下句が助詞・助動詞で始まる場合は減点
+        # すべての句が助詞・助動詞で始まる場合は減点
+        if upper_tokens and upper_tokens[0].pos in ["助詞", "助動詞"]:
+            bonus -= 1.5  # 大幅減点
         if middle_tokens and middle_tokens[0].pos in ["助詞", "助動詞"]:
             bonus -= 1.5  # 大幅減点
         if lower_tokens and lower_tokens[0].pos in ["助詞", "助動詞"]:
