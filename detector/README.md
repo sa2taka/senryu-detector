@@ -23,9 +23,81 @@ APIはFastAPIを利用して提供します。
 
 API、およびコマンドラインによるREPLにより提供します。
 
-### API
+### FastAPI REST API
 
-// TODO
+川柳検知機能をREST APIとして提供します。
+
+#### APIサーバーの起動
+
+```bash
+# uvicornで直接起動
+uv run python -m detector.api
+
+# または、スクリプトコマンドで起動（pyproject.tomlで定義）
+senryu-api
+
+# 開発モード（自動リロード有効）
+uv run uvicorn detector.api:app --host 0.0.0.0 --port 8000 --reload
+```
+
+#### APIエンドポイント
+
+- `GET /` - API基本情報
+- `GET /health` - ヘルスチェック
+- `GET /docs` - Swagger UI（自動生成されたAPI文書）
+- `GET /redoc` - ReDoc（自動生成されたAPI文書）
+- `GET /examples` - 川柳の例文取得
+- `POST /detect` - 単一テキストの川柳検知
+- `POST /detect/batch` - 複数テキストの一括検知
+
+#### API使用例
+
+```bash
+# ヘルスチェック
+curl http://localhost:8000/health
+
+# 川柳検知
+curl -X POST http://localhost:8000/detect \
+  -H "Content-Type: application/json" \
+  -d '{"text": "古池や蛙飛び込む水の音", "only_valid": true}'
+
+# 一括検知
+curl -X POST http://localhost:8000/detect/batch \
+  -H "Content-Type: application/json" \
+  -d '{
+    "texts": ["古池や蛙飛び込む水の音", "夏草や兵どもが夢の跡"],
+    "only_valid": false
+  }'
+```
+
+#### Pythonでの利用例
+
+```python
+import requests
+
+# 単一検知
+response = requests.post(
+    "http://localhost:8000/detect",
+    json={"text": "古池や蛙飛び込む水の音", "only_valid": True}
+)
+
+data = response.json()
+print(f"検知数: {data['count']}")
+for result in data['results']:
+    print(f"パターン: {result['pattern']}")
+    print(f"読み: {result['full_reading']}")
+    print(f"有効: {'✅' if result['is_valid'] else '❌'}")
+```
+
+#### APIテストの実行
+
+```bash
+# 統合テスト実行（APIサーバー不要）
+uv run python test_api.py
+
+# 実用例の実行（APIサーバーが必要）
+uv run python api_usage_example.py
+```
 
 ## CLI
 
@@ -39,8 +111,8 @@ API、およびコマンドラインによるREPLにより提供します。
 # パッケージのインポート
 from detector import SenryuDetector
 
-# 検知器を初期化
-detector = SenryuDetector(min_confidence=0.5)
+# 検知器を初期化（二値判定システム）
+detector = SenryuDetector()
 
 # 川柳を検知
 text = "ふるいけやかわずとびこむみずのおと"
@@ -49,7 +121,7 @@ results = detector.detect(text)
 # 結果を表示
 for result in results:
     print(f"パターン: {result.pattern.value}")
-    print(f"信頼度: {result.confidence:.3f}")
+    print(f"有効: {'✅' if result.is_valid else '❌'}")
     print(f"読み: {result.full_reading}")
     print(f"上句: {result.upper_phrase.reading} ({result.upper_phrase.mora_count})")
     print(f"中句: {result.middle_phrase.reading} ({result.middle_phrase.mora_count})")
@@ -94,18 +166,18 @@ for pattern in patterns:
     print(f"{pattern}: 有効={valid}, タイプ={pattern_type}")
 ```
 
-### 4. 信頼度による結果の違い
+### 4. 有効/無効な検知結果の確認
 
 ```python
 text = "ふるいけやかわずとびこむみずのおと"
 
-# 異なる信頼度閾値での結果を比較
-thresholds = [0.1, 0.5, 0.9]
+detector = SenryuDetector()
+results = detector.detect(text)
 
-for threshold in thresholds:
-    detector = SenryuDetector(min_confidence=threshold)
-    results = detector.detect(text)
-    print(f"信頼度閾値 {threshold}: {len(results)}件の結果")
+print(f"検知結果: {len(results)}件")
+for i, result in enumerate(results, 1):
+    status = "有効" if result.is_valid else "無効"
+    print(f"{i}. {status}: {result.pattern.value} - {result.full_reading}")
 ```
 
 ### 5. 複数の川柳候補を含むテキスト
@@ -114,12 +186,13 @@ for threshold in thresholds:
 # 長いテキストから川柳を抽出
 text = "昨日は良い天気でした。ふるいけやかわずとびこむみずのおと。今日は雨が降っています。"
 
-detector = SenryuDetector(min_confidence=0.3)
+detector = SenryuDetector()
 results = detector.detect(text)
 
 print(f"検知された川柳: {len(results)}件")
 for i, result in enumerate(results, 1):
-    print(f"{i}. {result.original_text}")
+    status = "✅" if result.is_valid else "❌"
+    print(f"{i}. {status} {result.original_text}")
     print(f"   パターン: {result.pattern.value}")
     print(f"   位置: {result.start_position}-{result.end_position}")
 ```

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 
 class SenryuPattern(Enum):
@@ -51,6 +51,7 @@ class DetectionResult(BaseModel):
     original_text: str = Field(description="Original text segment")
     is_valid: bool = Field(description="Whether this is a valid senryu", default=True)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def mora_pattern(self) -> tuple[int, int, int]:
         """モーラパターンをタプルで取得。."""
@@ -60,6 +61,7 @@ class DetectionResult(BaseModel):
             self.lower_phrase.mora_count,
         )
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def full_reading(self) -> str:
         """川柳の完全な読みを取得。."""
@@ -67,6 +69,7 @@ class DetectionResult(BaseModel):
             f"{self.upper_phrase.reading} {self.middle_phrase.reading} {self.lower_phrase.reading}"
         )
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def is_standard_pattern(self) -> bool:
         """標準の5-7-5パターンかどうかをチェック。."""
@@ -74,6 +77,15 @@ class DetectionResult(BaseModel):
 
     def __str__(self) -> str:
         """検知結果の文字列表現。."""
-        pattern_str = "-".join(map(str, self.mora_pattern))
+        pattern_str = "-".join(
+            map(
+                str,
+                (
+                    self.upper_phrase.mora_count,
+                    self.middle_phrase.mora_count,
+                    self.lower_phrase.mora_count,
+                ),
+            )
+        )
         status = "✅" if self.is_valid else "❌"
         return f"{status} [{pattern_str}] {self.original_text}"

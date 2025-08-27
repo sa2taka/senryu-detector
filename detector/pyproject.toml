@@ -19,7 +19,13 @@ dependencies = [
     "sudachipy>=0.6.8",
     "sudachidict-full>=20240716",
     "pydantic>=2.0.0",
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
 ]
+
+[project.scripts]
+senryu-api = "detector.api:main"
+senryu-cli = "detector.main:main"
 
 [project.optional-dependencies]
 dev = [
@@ -33,12 +39,14 @@ dev = [
 
 [dependency-groups]
 dev = [
+    "httpx>=0.28.1",
     "mypy>=1.17.1",
     "pre-commit>=4.3.0",
     "pytest>=8.4.1",
     "pytest-cov>=6.2.1",
     "pytest-xdist>=3.8.0",
     "ruff>=0.12.10",
+    "types-requests>=2.32.4.20250809",
 ]
 
 [tool.ruff]

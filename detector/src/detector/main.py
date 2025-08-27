@@ -80,18 +80,11 @@ def main(text: str | None = None) -> None:
             print(f"  パターン: {result.pattern.value}")
             print(f"  有効: {'✅' if result.is_valid else '❌'}")
             print(f"  読み: {result.full_reading}")
+            print(f"  上句: {result.upper_phrase.reading} ({result.upper_phrase.mora_count}モーラ)")
             print(
-                f"  上句: {result.upper_phrase.reading} "
-                f"({result.upper_phrase.mora_count}モーラ)"
+                f"  中句: {result.middle_phrase.reading} ({result.middle_phrase.mora_count}モーラ)"
             )
-            print(
-                f"  中句: {result.middle_phrase.reading} "
-                f"({result.middle_phrase.mora_count}モーラ)"
-            )
-            print(
-                f"  下句: {result.lower_phrase.reading} "
-                f"({result.lower_phrase.mora_count}モーラ)"
-            )
+            print(f"  下句: {result.lower_phrase.reading} ({result.lower_phrase.mora_count}モーラ)")
             print(f"  位置: {result.start_position}-{result.end_position}")
     else:
         print("川柳パターンは検知されませんでした。")
