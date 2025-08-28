@@ -160,13 +160,18 @@ async def detect_senryu(request: DetectRequest) -> DetectResponse:
 
 def main() -> None:
     """API サーバーを起動。."""
+    import os
+
     import uvicorn
+
+    # Cloud Runのポート環境変数を優先、デフォルトは8000
+    port = int(os.getenv("PORT", "8000"))
 
     uvicorn.run(
         "detector.api:app",
         host="0.0.0.0",
-        port=8000,
-        reload=True,
+        port=port,
+        reload=False,  # 本番環境ではreloadを無効化
         log_level="info",
     )
 

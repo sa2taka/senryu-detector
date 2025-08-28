@@ -1,0 +1,63 @@
+# Cloud Build configuration for Senryu Detector
+# Deploy to Cloud Run automatically on push to main branch
+
+steps:
+  # Build the Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/senryu-detector/senryu-detector:$SHORT_SHA'
+      - '-t'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/senryu-detector/senryu-detector:latest'
+      - '.'
+    dir: 'detector'
+
+  # Push the image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '--all-tags'
+      - 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/senryu-detector/senryu-detector'
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'senryu-detector'
+      - '--image=asia-northeast1-docker.pkg.dev/$PROJECT_ID/senryu-detector/senryu-detector:$SHORT_SHA'
+      - '--region=asia-northeast1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'
+      - '--memory=2Gi'
+      - '--cpu=2'
+      - '--min-instances=0'
+      - '--max-instances=100'
+      - '--concurrency=80'
+      - '--timeout=300'
+      - '--port=8080'
+      - '--set-env-vars=PYTHONUNBUFFERED=1,PYTHONDONTWRITEBYTECODE=1'
+
+# Artifact Registry repository must be created beforehand:
+# gcloud artifacts repositories create senryu-detector \
+#   --repository-format=docker \
+#   --location=asia-northeast1 \
+#   --description="Senryu Detector Docker images"
+
+options:
+  # Use high-CPU machine for faster builds
+  machineType: 'E2_HIGHCPU_8'
+  # Use substitution for dynamic values
+  substitution_option: 'ALLOW_LOOSE'
+  # Set logs location
+  logging: CLOUD_LOGGING_ONLY
+
+# Set build timeout (30 minutes)
+timeout: '1800s'
+
+# Substitutions for dynamic values
+substitutions:
+  _SERVICE_NAME: 'senryu-detector'
+  _REGION: 'asia-northeast1'
