@@ -45,18 +45,11 @@ class SenryuDetector:
         # 候補を検出
         candidates = list(self._find_senryu_candidates(tokens, normalized_text))
 
-        # 有効な川柳のみを返す（重複除去）
-        valid_results = []
-        seen_patterns = set()
+        # 有効な川柳のみを抽出し、重複を除去
+        valid_candidates = [result for result in candidates if result.is_valid]
 
-        for result in candidates:
-            if result.is_valid:
-                pattern_key = (result.mora_pattern, result.original_text)
-                if pattern_key not in seen_patterns:
-                    valid_results.append(result)
-                    seen_patterns.add(pattern_key)
-
-        return valid_results
+        # 開始位置が重複する川柳から最適なものを選択
+        return self._remove_duplicates(valid_candidates)
 
     def _normalize_text(self, text: str) -> str:
         """一貫した処理のためのテキスト正規化。.
@@ -67,8 +60,11 @@ class SenryuDetector:
         Returns:
             正規化されたテキスト
         """
-        # 改行を空白に変換
-        normalized = re.sub(r"\n+", " ", text)
+        # 改行2つ以上を句点に変換（明確な分離）
+        normalized = re.sub(r"\n{2,}", "。", text)
+
+        # 単一改行は空白に変換（句の区切り）
+        normalized = re.sub(r"\n", " ", normalized)
 
         # 複数の空白を1つに統合
         normalized = re.sub(r"\s+", " ", normalized)
@@ -506,3 +502,67 @@ class SenryuDetector:
         end_pos = start_pos + len(segment_text)
 
         return start_pos, min(end_pos, len(original_text))
+
+    def _remove_duplicates(self, results: list[DetectionResult]) -> list[DetectionResult]:
+        """開始位置が同じ川柳から最適なものを選択して重複を除去。.
+
+        Args:
+            results: 川柳検知結果のリスト
+
+        Returns:
+            重複除去された川柳検知結果のリスト
+        """
+        if not results:
+            return []
+
+        # 開始位置でグループ化
+        position_groups: dict[int, list[DetectionResult]] = {}
+        for result in results:
+            start_pos = result.start_position
+            if start_pos not in position_groups:
+                position_groups[start_pos] = []
+            position_groups[start_pos].append(result)
+
+        # 各グループから最適な結果を選択
+        selected_results = []
+        for group in position_groups.values():
+            if len(group) == 1:
+                selected_results.append(group[0])
+            else:
+                best_result = self._select_best_result(group)
+                selected_results.append(best_result)
+
+        # 開始位置でソート
+        selected_results.sort(key=lambda x: x.start_position)
+        return selected_results
+
+    def _select_best_result(self, candidates: list[DetectionResult]) -> DetectionResult:
+        """候補の中から最適な川柳を選択。.
+
+        Args:
+            candidates: 同じ開始位置を持つ川柳候補のリスト
+
+        Returns:
+            最適な川柳検知結果
+        """
+        # 5-7-5パターンを優先
+        from ..models.senryu import SenryuPattern
+
+        standard_patterns = [c for c in candidates if c.pattern == SenryuPattern.STANDARD]
+        if standard_patterns:
+            # 5-7-5の中で最長のテキストを選択
+            return max(standard_patterns, key=lambda x: len(x.original_text))
+
+        # 字余りパターンの中で最長のテキストを選択
+        jiamari_patterns = [
+            c
+            for c in candidates
+            if c.pattern
+            in [SenryuPattern.JIAMARI_1, SenryuPattern.JIAMARI_2, SenryuPattern.JIAMARI_3]
+        ]
+
+        if jiamari_patterns:
+            return max(jiamari_patterns, key=lambda x: len(x.original_text))
+
+        # その他の場合は最長のテキストを選択
+        return max(candidates, key=lambda x: len(x.original_text))

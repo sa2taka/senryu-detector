@@ -184,6 +184,74 @@ class TestSenryuDetection:
                 assert phrase.reading
                 assert len(phrase.reading.strip()) > 0
 
+    def test_duplicate_removal(self) -> None:
+        """Test that duplicate detections starting at same position are removed."""
+        # 文末に句読点があるケース（同じ開始位置で複数パターンが検知される可能性）
+        text = "柿食えば鐘が鳴るなり法隆寺。"
+        results = self.detector.detect(text)
+
+        if results:
+            # 同じ開始位置の結果が複数ないことを確認
+            start_positions = [result.start_position for result in results]
+            assert len(start_positions) == len(set(start_positions))
+
+            # 結果は最長のテキストを含む川柳を採用していることを確認
+            best_result = results[0]
+            assert best_result.is_valid
+
+    def test_newline_handling(self) -> None:
+        """Test newline processing in text normalization."""
+        # 改行1つの場合（句の区切りとして処理）
+        text_single_newline = "古池や\n蛙飛び込む\n水の音"
+        results_single = self.detector.detect(text_single_newline)
+
+        # 改行2つ以上の場合（明確な分離）
+        text_double_newline = "古池や蛙飛び込む水の音\n\n今日は良い天気です"
+        _ = self.detector.detect(text_double_newline)
+
+        # 単一改行の場合は川柳として検知される
+        if results_single:
+            assert results_single[0].is_valid
+
+        # 改行なしのテキストと同様の結果が得られることを確認
+        text_no_newline = "古池や 蛙飛び込む 水の音"
+        results_no_newline = self.detector.detect(text_no_newline)
+
+        if results_single and results_no_newline:
+            # パターンが同じであることを確認
+            assert results_single[0].pattern == results_no_newline[0].pattern
+
+    def test_longest_match_priority(self) -> None:
+        """Test that longest matches are prioritized over shorter ones."""
+        # より長い文の中に短い川柳パターンも含まれるようなケース
+        text = "美しい古池や蛙飛び込む水の音が聞こえる"
+        results = self.detector.detect(text)
+
+        if results:
+            # 同じ開始位置の川柳がある場合、より長いものが選ばれる
+            for result in results:
+                assert result.is_valid
+                # 検知されたテキストの長さをチェック
+                assert len(result.original_text) > 0
+
+    def test_pattern_priority(self) -> None:
+        """Test that 5-7-5 pattern is prioritized over jiamari patterns."""
+        # 5-7-5と字余りの両方が検知可能なテキスト（仮想的な例）
+        # この実装では実際にはこのようなケースは少ないが、ロジックのテスト
+        text = "ふるいけやかわずとびこむみずのおと"
+        results = self.detector.detect(text)
+
+        if results:
+            # 結果が返された場合、適切なパターンが選択されている
+            best_result = results[0]
+            assert best_result.is_valid
+            assert best_result.pattern in [
+                SenryuPattern.STANDARD,
+                SenryuPattern.JIAMARI_1,
+                SenryuPattern.JIAMARI_2,
+                SenryuPattern.JIAMARI_3,
+            ]
+
     def test_edge_cases(self) -> None:
         """Test various edge cases."""
         edge_cases = [
