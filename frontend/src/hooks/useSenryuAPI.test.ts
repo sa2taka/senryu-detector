@@ -5,23 +5,38 @@ import type { DetectResponse } from '../types/api'
 
 // Mock fetch globally
 const mockFetch = vi.fn()
-global.fetch = mockFetch
+;(globalThis as any).fetch = mockFetch
 
 const mockSuccessResponse: DetectResponse = {
   success: true,
-  text: '古池や蛙飛び込む水の音',
   results: [
     {
-      text: '古池や蛙飛び込む水の音',
       pattern: '5-7-5',
-      mora_counts: [5, 7, 5],
+      upper_phrase: {
+        tokens: [{ surface: '古池', reading: 'フルイケ', mora_count: 4, pos: '名詞' }, { surface: 'や', reading: 'ヤ', mora_count: 1, pos: '助詞' }],
+        mora_count: 5,
+        text: '古池や',
+        reading: 'フルイケヤ'
+      },
+      middle_phrase: {
+        tokens: [{ surface: '蛙', reading: 'カエル', mora_count: 3, pos: '名詞' }, { surface: '飛び込む', reading: 'トビコム', mora_count: 4, pos: '動詞' }],
+        mora_count: 7,
+        text: '蛙飛び込む',
+        reading: 'カエルトビコム'
+      },
+      lower_phrase: {
+        tokens: [{ surface: '水', reading: 'ミズ', mora_count: 2, pos: '名詞' }, { surface: 'の', reading: 'ノ', mora_count: 1, pos: '助詞' }, { surface: '音', reading: 'オト', mora_count: 2, pos: '名詞' }],
+        mora_count: 5,
+        text: '水の音',
+        reading: 'ミズノオト'
+      },
+      start_position: 0,
+      end_position: 11,
+      original_text: '古池や蛙飛び込む水の音',
       is_valid: true,
-      confidence: 0.95,
-      segments: [
-        { text: '古池や', mora_count: 5 },
-        { text: '蛙飛び込む', mora_count: 7 },
-        { text: '水の音', mora_count: 5 }
-      ]
+      mora_pattern: [5, 7, 5],
+      full_reading: 'フルイケヤカエルトビコムミズノオト',
+      is_standard_pattern: true
     }
   ],
   count: 1
