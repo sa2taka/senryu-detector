@@ -33,6 +33,10 @@ class SenryuDetector:
         if not text.strip():
             return []
 
+        # 日本語文字を含まない場合は早期リターン
+        if not self._contains_japanese(text):
+            return []
+
         # テキストを正規化
         normalized_text = self._normalize_text(text)
 
@@ -51,6 +55,26 @@ class SenryuDetector:
         # 開始位置が重複する川柳から最適なものを選択
         return self._remove_duplicates(valid_candidates)
 
+    def _contains_japanese(self, text: str) -> bool:
+        """テキストが日本語文字を含むかどうかをチェック。.
+
+        Args:
+            text: チェックするテキスト
+
+        Returns:
+            日本語文字を含む場合True
+        """
+        for char in text:
+            # ひらがな、カタカナ、CJK統合漢字を含む場合は日本語とみなす
+            if (
+                "\u3040" <= char <= "\u309f"  # ひらがな
+                or "\u30a0" <= char <= "\u30ff"  # カタカナ
+                or "\u4e00" <= char <= "\u9fff"  # CJK統合漢字
+                or "\u3400" <= char <= "\u4dbf"  # CJK拡張A
+            ):
+                return True
+        return False
+
     def _normalize_text(self, text: str) -> str:
         """一貫した処理のためのテキスト正規化。.
 
@@ -60,11 +84,11 @@ class SenryuDetector:
         Returns:
             正規化されたテキスト
         """
-        # 改行2つ以上を句点に変換（明確な分離）
-        normalized = re.sub(r"\n{2,}", "。", text)
+        # 改行を句点に変換（区切り文字として扱う）
+        normalized = re.sub(r"\n", "。", text)
 
-        # 単一改行は空白に変換（句の区切り）
-        normalized = re.sub(r"\n", " ", normalized)
+        # 複数の句点を1つに統合
+        normalized = re.sub(r"。+", "。", normalized)
 
         # 複数の空白を1つに統合
         normalized = re.sub(r"\s+", " ", normalized)
@@ -94,6 +118,14 @@ class SenryuDetector:
                 start_idx + 3, min(len(tokens) + 1, start_idx + 20)
             ):  # 最大20トークン
                 candidate_tokens = tokens[start_idx:end_idx]
+
+                # 句点（。）をまたいだ候補を除外
+                if self._contains_sentence_boundary(candidate_tokens):
+                    continue
+
+                # 未知語を含む候補を除外
+                if self._contains_unknown_words(candidate_tokens):
+                    continue
 
                 # 各パターンに対してフレーズ分割を試行
                 for pattern in target_patterns:
@@ -336,6 +368,43 @@ class SenryuDetector:
             bonus += 0.5
 
         return bonus
+
+    def _contains_sentence_boundary(self, tokens: list[Token]) -> bool:
+        """トークンリストに句点などの文境界記号が含まれているかチェック。.
+
+        Args:
+            tokens: チェックするトークンリスト
+
+        Returns:
+            文境界記号が含まれている場合True
+        """
+        for token in tokens:
+            # 句点（。）や感嘆符（！）、疑問符（？）を含む場合は除外
+            if token.surface in ["。", "！", "？", "!", "?"]:
+                return True
+        return False
+
+    def _contains_unknown_words(self, tokens: list[Token]) -> bool:
+        """トークンリストに未知語が含まれているかチェック。.
+
+        Args:
+            tokens: チェックするトークンリスト
+
+        Returns:
+            未知語が含まれている場合True
+        """
+        for token in tokens:
+            # モーラ数が0で、かつ読みが表層形と同じ場合は未知語とみなす
+            if token.mora_count == 0 and token.reading == token.surface:
+                # ただし、記号や空白は除外
+                if token.pos not in ["補助記号", "空白"]:
+                    return True
+
+            # 読みが英数字のままの場合も未知語とみなす
+            if token.reading and any(c.isalnum() and ord(c) < 128 for c in token.reading):
+                return True
+
+        return False
 
     def _is_valid_phrase_start(self, token: Token) -> bool:
         """句の開始として適切な品詞かどうかを判定。.

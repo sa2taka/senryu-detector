@@ -11,8 +11,8 @@ export default defineConfig(({ mode }) => ({
   define: {
     __API_BASE_URL__: JSON.stringify(
       !mode || mode === 'development'
-        ? 'http://localhost:8000'
-        : 'https://your-api-domain.com'
+        ? 'http://localhost:8080'
+        : 'https://senryu-detector-111226594682.asia-northeast1.run.app'
     ),
   },
   test: {

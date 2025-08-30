@@ -23,7 +23,7 @@ export const SenryuDetector: React.FC = () => {
   };
 
   return (
-    <div className="senryu-detector">
+    <div className="container">
       <header className="header">
         <h1>俳句・川柳検出ツール</h1>
         <p>日本語テキストから5-7-5音律の俳句・川柳を検出します</p>

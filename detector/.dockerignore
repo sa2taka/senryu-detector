@@ -75,7 +75,6 @@ Thumbs.db
 
 # Project specific
 tests/
-*.md
 cloudbuild.yaml
 cloud-run-deploy.sh
 .pre-commit-config.yaml

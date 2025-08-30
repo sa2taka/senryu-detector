@@ -80,6 +80,11 @@ class SudachiTokenizer:
             pos_tags = morpheme.part_of_speech()
             pos = pos_tags[0] if pos_tags else "Unknown"
 
+            # 記号（補助記号、空白）の場合は読みを空文字列、モーラ数を0にする
+            if pos in ["補助記号", "空白"]:
+                normalized_reading = ""
+                mora_count = 0
+
             tokens.append(
                 Token(
                     surface=surface,

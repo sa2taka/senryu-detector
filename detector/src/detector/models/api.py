@@ -18,13 +18,16 @@ class DetectRequest(BaseModel):
         default=False,
         description="Trueの場合、有効な川柳のみを返す",
     )
+    details: bool = Field(
+        default=False,
+        description="Trueの場合、各句の詳細情報（phrase）を含めて返す",
+    )
 
 
 class DetectResponse(BaseModel):
     """川柳検知APIのレスポンスモデル。."""
 
     success: bool = Field(description="処理が成功したかどうか")
-    text: str = Field(description="分析されたテキスト")
     results: list[DetectionResult] = Field(description="検知結果のリスト")
     count: int = Field(description="検知された川柳の数")
 

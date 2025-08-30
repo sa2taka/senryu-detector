@@ -143,9 +143,15 @@ async def detect_senryu(request: DetectRequest) -> DetectResponse:
         if request.only_valid:
             results = [result for result in results if result.is_valid]
 
+        # detailsオプションが無効な場合、phraseフィールドを削除
+        if not request.details:
+            for result in results:
+                result.upper_phrase = None
+                result.middle_phrase = None
+                result.lower_phrase = None
+
         return DetectResponse(
             success=True,
-            text=request.text,
             results=results,
             count=len(results),
         )
@@ -164,8 +170,8 @@ def main() -> None:
 
     import uvicorn
 
-    # Cloud Runのポート環境変数を優先、デフォルトは8000
-    port = int(os.getenv("PORT", "8000"))
+    # Cloud Runのポート環境変数を優先、デフォルトは8080
+    port = int(os.getenv("PORT", "8080"))
 
     uvicorn.run(
         "detector.api:app",

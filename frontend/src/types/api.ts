@@ -1,23 +1,39 @@
-export interface DetectionResult {
+export interface Token {
+  surface: string;
+  reading: string;
+  mora_count: number;
+  pos: string;
+}
+
+export interface SenryuPhrase {
+  tokens: Token[];
+  mora_count: number;
   text: string;
-  pattern: string;
-  mora_counts: number[];
+  reading: string;
+}
+
+export interface DetectionResult {
+  pattern: "5-7-5" | "5-8-5" | "6-7-5" | "5-7-6";
+  upper_phrase: SenryuPhrase | null;
+  middle_phrase: SenryuPhrase | null;
+  lower_phrase: SenryuPhrase | null;
+  start_position: number;
+  end_position: number;
+  original_text: string;
   is_valid: boolean;
-  confidence: number;
-  segments: Array<{
-    text: string;
-    mora_count: number;
-  }>;
+  mora_pattern?: [number, number, number] | null;
+  full_reading?: string | null;
+  is_standard_pattern?: boolean;
 }
 
 export interface DetectRequest {
   text: string;
   only_valid?: boolean;
+  details?: boolean;
 }
 
 export interface DetectResponse {
   success: boolean;
-  text: string;
   results: DetectionResult[];
   count: number;
 }

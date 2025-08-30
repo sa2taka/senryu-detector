@@ -4,7 +4,7 @@ import type { DetectRequest, DetectResponse, ErrorResponse } from '../types/api'
 const API_BASE_URL = __API_BASE_URL__;
 
 interface UseSenryuAPIResult {
-  detect: (text: string, onlyValid?: boolean) => Promise<DetectResponse>;
+  detect: (text: string, onlyValid?: boolean, details?: boolean) => Promise<DetectResponse>;
   loading: boolean;
   error: string | null;
   clearError: () => void;
@@ -18,7 +18,7 @@ export const useSenryuAPI = (): UseSenryuAPIResult => {
     setError(null);
   }, []);
 
-  const detect = useCallback(async (text: string, onlyValid = false): Promise<DetectResponse> => {
+  const detect = useCallback(async (text: string, onlyValid = false, details = true): Promise<DetectResponse> => {
     setLoading(true);
     setError(null);
 
@@ -26,6 +26,7 @@ export const useSenryuAPI = (): UseSenryuAPIResult => {
       const request: DetectRequest = {
         text,
         only_valid: onlyValid,
+        details,
       };
 
       const response = await fetch(`${API_BASE_URL}/detect`, {
