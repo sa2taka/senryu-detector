@@ -4,6 +4,7 @@ from .base import BaseFilter, CandidateFilter
 from .chain import FilterChain
 from .japanese import JapaneseCharacterFilter, MinimumTokenCountFilter
 from .punctuation import PunctuationBoundaryFilter, SymbolFilter
+from .sokuon import SokuonEndingFilter
 from .unknown_word import MoraCountFilter, UnknownWordFilter
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "SymbolFilter",
     "UnknownWordFilter",
     "MoraCountFilter",
+    "SokuonEndingFilter",
 ]

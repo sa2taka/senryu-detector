@@ -14,6 +14,7 @@ from .filters import (
     MinimumTokenCountFilter,
     MoraCountFilter,
     PunctuationBoundaryFilter,
+    SokuonEndingFilter,
     UnknownWordFilter,
 )
 from .patterns import (
@@ -45,6 +46,7 @@ class SenryuDetector:
                 PunctuationBoundaryFilter(),
                 UnknownWordFilter(strict=True),
                 MoraCountFilter(min_mora=12, max_mora=20, tolerance=4),
+                SokuonEndingFilter(),
             ]
         )
 
