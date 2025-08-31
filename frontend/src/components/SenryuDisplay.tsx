@@ -27,13 +27,6 @@ export const SenryuDisplay: React.FC<SenryuDisplayProps> = ({ results, originalT
 
           return (
             <div key={index} className={`result-card ${result.is_valid ? 'valid' : 'invalid'}`}>
-              <div className="result-header">
-                <span className="pattern-type">{result.pattern}</span>
-                <span className={`validity ${result.is_valid ? 'valid' : 'invalid'}`}>
-                  {result.is_valid ? '✓ 標準' : '⚠ 字余り'}
-                </span>
-              </div>
-
               <div className="senryu-text">
                 <div className="segments">
                   {phrases.length > 0 ? (
@@ -51,16 +44,6 @@ export const SenryuDisplay: React.FC<SenryuDisplayProps> = ({ results, originalT
                       <div className="segment-text">{result.original_text}</div>
                     </div>
                   )}
-                </div>
-
-                <div className="full-text">
-                  <div className="text-display">"{result.original_text}"</div>
-                  {result.full_reading && (
-                    <div className="full-reading">「{result.full_reading}」</div>
-                  )}
-                  <div className="mora-pattern">
-                    {result.mora_pattern ? result.mora_pattern.join('-') + '音律' : result.pattern + '音律'}
-                  </div>
                 </div>
               </div>
             </div>
